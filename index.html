@@ -236,11 +236,27 @@
 </div>
 
 <script>
-  // Your deployed Google Apps Script Web App URL
   const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx0Bpa3zBzHvGiOAhKAjaP05SMBrlfuA4OWZnSvvRlUwiftXNyv0vA9JUyQNFW8H1LUPQ/exec"; 
   
   let allRecords = [];
   let currentRecord = null;
+
+  // Function to clean raw ISO date strings into clean DD-MM-YYYY format
+  function formatDate(dateStr) {
+    if (!dateStr || dateStr === "-") return "-";
+    
+    if (typeof dateStr === "string" && dateStr.includes("T")) {
+      const d = new Date(dateStr);
+      if (!isNaN(d.getTime())) {
+        const day = String(d.getDate()).padStart(2, '0');
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const year = d.getFullYear();
+        return `${day}-${month}-${year}`;
+      }
+      return dateStr.split("T")[0];
+    }
+    return dateStr;
+  }
 
   // Fetch all records once when page loads
   window.addEventListener('DOMContentLoaded', async () => {
@@ -266,7 +282,6 @@
     }
   });
 
-  // Fast search inside browser memory as user types
   function instantSearch() {
     const query = document.getElementById("searchInput").value.trim().toLowerCase();
     const detailsCard = document.getElementById("detailsCard");
@@ -288,7 +303,6 @@
       currentRecord = match;
       gridContainer.innerHTML = "";
 
-      // All 14 custom headers mapped exactly
       const fields = [
         { label: "Mobile Number", val: match.mobile },
         { label: "Loan No", val: match.loanNo },
@@ -299,7 +313,7 @@
         { label: "Loan Repay Amount (Waiver Amount)", val: match.repayAmount ? "₹" + match.repayAmount : "-" },
         { label: "Total Collection (Already Collected)", val: match.totalCollection ? "₹" + match.totalCollection : "₹0" },
         { label: "Outstanding Amount (Pitch Amount)", val: match.outstandingAmount ? "₹" + match.outstandingAmount : "₹0", highlight: true },
-        { label: "Loan Disburse Date", val: match.disburseDate },
+        { label: "Loan Disburse Date", val: formatDate(match.disburseDate) },
         { label: "Current City", val: match.currentCity },
         { label: "Current State", val: match.currentState },
         { label: "DPD", val: match.dpd, isDpd: true },
@@ -324,7 +338,6 @@
     }
   }
 
-  // Update Remark in Google Sheet
   async function submitRemark() {
     if (!currentRecord) return;
 
